@@ -217,20 +217,21 @@ namespace SmartConf
         /// <param name="source">Source to use as the primary source.</param>
         public void SaveChanges(IConfigurationSource<T> source)
         {
-            var @base = CreateBaseConfig();
-            var mrg = new T();
-            mrg.MergeWith(_primarySource.Config);
-            mrg.MergeWith(Out, defaultObject: @base);
+            var allExceptPrimaryConfig = CreateBaseConfig();
+            var configToSave = new T();
+            var currentConfig = Out;
+            configToSave.MergeWith(_primarySource.Config);
+            configToSave.MergeWith(currentConfig, defaultObject: allExceptPrimaryConfig);
 
             // Copy over the values for all "always serialized" properties
             foreach (var prop in _propertiesAlwaysSerialized
                 .Select(propName => typeof (T).GetProperty(propName)))
             {
-                prop.SetValue(mrg, prop.GetValue(Out, null), null);
+                prop.SetValue(configToSave, prop.GetValue(currentConfig, null), null);
             }
 
-            source.PartialSave(mrg,
-                GetProperties(@base, _primarySource.Config, PropertyStatus.Changed)
+            source.PartialSave(configToSave,
+                GetProperties(allExceptPrimaryConfig, _primarySource.Config, PropertyStatus.Changed)
                     .Select(p => p.Name)
                     .Concat(_propertiesAlwaysSerialized)
                     .Except(_propertiesNeverSerialized));
@@ -287,6 +288,31 @@ namespace SmartConf
                 else if(status == PropertyStatus.Unchanged && !propertyChanged)
                 {
                     yield return info;
+                }
+            }
+        }
+
+        private static IEnumerable<PropertyChain> GetPropertyChains(T start, T end, PropertyStatus status)
+        {
+            var @default = new T();
+            foreach (var info in typeof(T).GetProperties())
+            {
+                if (info.IsSimplePropety())
+                {
+                    var priValue = info.GetGetMethod().Invoke(end, null);
+                    var baseValue = info.GetGetMethod().Invoke(start, null);
+                    var defaultValue = info.GetGetMethod().Invoke(@default, null);
+
+                    var propertyChanged = !Equals(priValue, baseValue) &&
+                                          !Equals(priValue, defaultValue);
+                    if (status == PropertyStatus.Changed && propertyChanged)
+                    {
+                        yield return new PropertyChain(info);
+                    }
+                    else if (status == PropertyStatus.Unchanged && !propertyChanged)
+                    {
+                        yield return new PropertyChain(info);
+                    }
                 }
             }
         }

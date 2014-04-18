@@ -71,7 +71,7 @@ namespace SmartConf
             {
                 var secValue = pi.GetValue(secondary, null);
                 var defaultValue = pi.GetValue(defaultObject, null);
-                if (IsSimplePropety(pi))
+                if (pi.IsSimplePropety())
                 {
                     if (!Equals(secValue, defaultValue))
                     {
@@ -86,12 +86,6 @@ namespace SmartConf
                         defaultValue ?? Activator.CreateInstance(pi.PropertyType));
                 }
             }
-        }
-
-        private static bool IsSimplePropety(PropertyInfo pi)
-        {
-            var propertyType = pi.PropertyType;
-            return propertyType == typeof(string) || propertyType.IsValueType;
         }
 
         /// <summary>

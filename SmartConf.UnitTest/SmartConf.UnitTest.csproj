@@ -53,6 +53,7 @@
     <Compile Include="Mocks\Config.cs" />
     <Compile Include="Mocks\DummyConfigurationSource.cs" />
     <Compile Include="MergeObjectsUnitTest.cs" />
+    <Compile Include="PropertyChainTests.cs" />
     <Compile Include="RuleBasedValidatorUnitTest.cs" />
     <Compile Include="SmartConfUnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
